@@ -40,7 +40,16 @@ public class UserController {
         return mv;
     }
 
-    @RequestMapping("add")
+    /**
+     * 新增和修改用户接口
+     * todo 为了测试方便，提供get方式。之后应删去GET，仅支持POST。
+     * @param userId
+     * @param loginName
+     * @param name
+     * @param password
+     * @return
+     */
+    @RequestMapping(value="add", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public String addUser(@RequestParam("userId") String userId, @RequestParam("loginName") String loginName,
                           @RequestParam("name") String name, @RequestParam("password") String password){
@@ -53,7 +62,13 @@ public class UserController {
         return result ? "success" : "failed";
     }
 
-    @RequestMapping("delete")
+    /**
+     * 删除用户
+     * todo 为了测试方便，提供get方式。之后应删去GET，仅支持POST。
+     * @param userId
+     * @return
+     */
+    @RequestMapping(value = "delete", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public String deleteUser(@RequestParam("userId") String userId){
         boolean result = false;
