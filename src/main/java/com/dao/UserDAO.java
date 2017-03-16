@@ -1,11 +1,14 @@
 package com.dao;
 
 import com.model.User;
+import org.springframework.stereotype.Repository;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+@Repository
 public class UserDAO {
     private static final List<User> users = new ArrayList<>();
 
@@ -17,16 +20,25 @@ public class UserDAO {
         users.add(new User(5, "dolly2", "", "Dolly2"));
     }
 
-    public static List<User> getUsers(){
+    public List<User> getUsers(){
         return users;
     }
 
-    public static boolean addUser(String loginName, String name, String password) {
+    public User getUser(long userId){
+        for (User user : users) {
+            if(userId == user.getUserId()){
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public boolean addUser(String loginName, String name, String password) {
         users.add(new User(getMaxUserId()+1, loginName, password, name));
         return true;
     }
 
-    public static boolean delUser(long userId){
+    public boolean delUser(long userId){
         Iterator it = users.iterator();
         while(it.hasNext()){
             User user = (User) it.next();
@@ -38,7 +50,7 @@ public class UserDAO {
         return false;
     }
 
-    public static boolean modifyUser(long userId, String loginName, String pwd, String name){
+    public boolean modifyUser(long userId, String loginName, String pwd, String name){
         Iterator it = users.iterator();
         while(it.hasNext()){
             User user = (User) it.next();
@@ -52,7 +64,7 @@ public class UserDAO {
         return false;
     }
 
-    private static long getMaxUserId(){
+    private long getMaxUserId(){
         long max = 0;
         for(User user : users){
             if(user.getUserId().longValue() > max){

@@ -9,13 +9,17 @@ import org.springframework.cglib.core.Predicate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 @Service("userService")
 public class UserServiceImpl implements UserService {
 
+    @Resource
+    private UserDAO userDAO;
+
     public List<User> queryUser(final Long userId, final String loginName, int orderType) {
-        List<User> userList = new ArrayList(UserDAO.getUsers());
+        List<User> userList = new ArrayList(userDAO.getUsers());
         if(!StringUtils.isEmpty(loginName)){
             CollectionUtils.filter(userList, new Predicate() {
                 public boolean evaluate(Object o) {
@@ -39,6 +43,31 @@ public class UserServiceImpl implements UserService {
         getOrderList(orderType, userList);
 
         return userList;
+    }
+
+    @Override
+    public List<User> getUsers() {
+        return userDAO.getUsers();
+    }
+
+    @Override
+    public User getUser(long userId) {
+        return userDAO.getUser(userId);
+    }
+
+    @Override
+    public boolean addUser(String loginName, String name, String password) {
+        return userDAO.addUser(loginName, name, password);
+    }
+
+    @Override
+    public boolean delUser(long userId) {
+        return userDAO.delUser(userId);
+    }
+
+    @Override
+    public boolean modifyUser(long userId, String loginName, String pwd, String name) {
+        return userDAO.modifyUser(userId, loginName, pwd, name);
     }
 
     private void getOrderList(int orderType, List<User> users) {

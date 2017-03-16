@@ -1,8 +1,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page language="java" pageEncoding="UTF-8"%>
-<html><body>
+<html>
+<head>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/resource/js/jquery-3.1.1.min.js"></script>
+</head>
+<body>
 <strong>用户管理系统</strong>
 <br>
+<button id="add" name="add" value="" onclick="addUserPage()">添加新用户</button>
 <br>
 <table>
     <tr>
@@ -16,6 +21,8 @@
             <td>${user.userId}</td>
             <td>${user.loginName}</td>
             <td>${user.name}</td>
+            <td><button onclick="delUser(${user.userId},'${user.name}')">删除</button></td>
+            <td><button onclick="modifyUser(${user.userId})">修改</button></td>
         </tr>
     </c:forEach>
 </table>
@@ -25,49 +32,64 @@
     <option value="3" <c:if test="${orderType == 3}">selected</c:if>>登录名正序</option>
     <option value="4" <c:if test="${orderType == 4}">selected</c:if>>登录名逆序</option>
 </select>
-用户名<input id="userId" name="userId" value="${userId}">
+用户ID<input id="userId" name="userId" value="${userId}">
 登录名<input id="loginName" name="loginName" value="${loginName}">
 <button id="query" name="query" value="" onclick="queryUser()">查找</button>
 </body></html>
 
-<script>
-    var Ajax={
-        get: function (url,fn){
-            var obj=new XMLHttpRequest();  // XMLHttpRequest对象用于在后台与服务器交换数据
-            obj.open('GET',url,true);
-            obj.onreadystatechange=function(){
-                if (obj.readyState == 4 && obj.status == 200 || obj.status == 304) { // readyState==4说明请求已完成
-                    fn.call(this, obj.responseText);  //从服务器获得数据
-                }
-            };
-            obj.send(null);
-        },
-        post: function (url, data, fn) {
-            var obj = new XMLHttpRequest();
-            obj.open("POST", url, true);
-            obj.setRequestHeader("Content-type", "application/x-www-form-urlencoded"); // 发送信息至服务器时内容编码类型
-            obj.onreadystatechange = function () {
-                if (obj.readyState == 4 && (obj.status == 200 || obj.status == 304)) {  // 304未修改
-                    fn.call(this, obj.responseText);
-                }
-            };
-            obj.send(data);
+<script type="text/javascript">
+
+    function queryUser() {
+
+        var reg = new RegExp("^[0-9]*$");
+        var userId = $("#userId").val();
+        if(!reg.test(userId)){
+            alert("请输入数字!");
+        }else{
+            var obj = document.getElementById("orderType");
+            var index = obj.selectedIndex; // 选中索引
+            var value = obj.options[index].value; // 选中值
+            var loginName = document.getElementById("loginName").value;
+            var url = "/user/list/" + value + "?userId="+userId+"&loginName="+loginName;
+            //todo 异步请求，重新生成页面。
+            window.location.href = url;
         }
     }
 
-
-    function queryUser() {
-        var obj = document.getElementById("orderType");
-        var index = obj.selectedIndex; // 选中索引
-        var value = obj.options[index].value; // 选中值
-        var userId = document.getElementById("userId").value;
-        var loginName = document.getElementById("loginName").value;
-        var url = "/user/list/" + value + "?userId="+userId+"&loginName="+loginName;
-        //todo 异步请求，重新生成页面。
-        //var list = Ajax.get(url);
-        window.location.href = url;
+    function modifyUser(userId) {
+        window.location.href = '/user/aNewUser.html?userId=' + userId;
     }
 
+    function addUserPage() {
+        window.location.href = '/user/aNewUser.html?userId=';
+    }
+
+    function delUser(userId, name) {
+        var r = confirm("确认删除" + name + "?");
+        if (r == true){
+            $.ajax({
+                type: 'POST',
+                url: '/user/delete.json',
+                dataType: 'json',
+                data: {userId:userId},
+                success: function(data){
+                    if(200 == data.status){
+                        alert('删除成功');
+                        var content = '<tr><td>用户ID</td><td>登录名</td><td>姓名</td></tr>';
+                        $.each(data.data, function(index, value){
+                            content = content + '<tr><td>' + value.userId + '</td><td>' + value.loginName + '</td><td>' + value.name + '</td></tr>';
+                        });
+                        $('table').html(content);
+                    }else{
+                        alert('删除失败');
+                    }
+                },
+                error:function(XMLResponse){
+                    alert(XMLResponse.status);
+                }
+            })
+        }
+    }
     
 
 </script>

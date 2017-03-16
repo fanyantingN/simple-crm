@@ -1,6 +1,7 @@
 package com.controller;
 
-import com.dao.UserDAO;
+import com.alibaba.fastjson.JSON;
+import com.model.AjaxResponse;
 import com.model.User;
 import com.service.UserService;
 import org.springframework.stereotype.Controller;
@@ -10,6 +11,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 @RequestMapping("user")
@@ -29,7 +32,7 @@ public class UserController {
                                   @RequestParam(value = "loginName") String loginName){
         ModelAndView mv = new ModelAndView("list");
         Long userIdLong = null;
-        if(!StringUtils.isEmpty(userId)){
+        if(!StringUtils.isEmpty(userId) && validNumber(userId)){
             userIdLong = Long.parseLong(userId);
         }
         List<User> userList = userService.queryUser(userIdLong, loginName, orderType);
@@ -40,42 +43,67 @@ public class UserController {
         return mv;
     }
 
+    private boolean validNumber(@RequestParam(value = "userId") String userId) {
+        String reg = "^[0-9]*$";
+        Pattern pattern = Pattern.compile(reg);
+        Matcher matcher = pattern.matcher(userId);
+        return matcher.matches();
+    }
+
+    @RequestMapping("aNewUser.html")
+    public ModelAndView addNewUer(@RequestParam("userId") String userId){
+        ModelAndView mv = new ModelAndView("aNewUser");
+        if(!StringUtils.isEmpty(userId)){
+            User user = userService.getUser(new Long(userId).longValue());
+            mv.getModelMap().put("user", user);
+        }
+        return mv;
+    }
+
     /**
      * 新增和修改用户接口
-     * todo 为了测试方便，提供get方式。之后应删去GET，仅支持POST。
      * @param userId
      * @param loginName
      * @param name
      * @param password
      * @return
      */
-    @RequestMapping(value="add", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value="add", method = {RequestMethod.POST})
     @ResponseBody
     public String addUser(@RequestParam("userId") String userId, @RequestParam("loginName") String loginName,
                           @RequestParam("name") String name, @RequestParam("password") String password){
+        AjaxResponse ajaxResponse = new AjaxResponse();
         boolean result;
-        if(StringUtils.isEmpty(userId)){
-            result = UserDAO.addUser(loginName, name, password);
-        }else{
-            result = UserDAO.modifyUser(Long.parseLong(userId), loginName, password, name);
+        if (StringUtils.isEmpty(userId)) {
+            result = userService.addUser(loginName, name, password);
+        } else {
+            result = userService.modifyUser(Long.parseLong(userId), loginName, password, name);
         }
-        return result ? "success" : "failed";
+        if (!result) {
+            ajaxResponse.setStatus(300);
+        }
+        return JSON.toJSONString(ajaxResponse);
     }
 
     /**
      * 删除用户
-     * todo 为了测试方便，提供get方式。之后应删去GET，仅支持POST。
      * @param userId
      * @return
      */
-    @RequestMapping(value = "delete", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "delete.json", method = {RequestMethod.POST}, produces = "application/json;charset=utf-8")
     @ResponseBody
-    public String deleteUser(@RequestParam("userId") String userId){
+    public String deleteUser(@RequestParam("userId") long userId){
+        AjaxResponse<List<User>> response = new AjaxResponse<>();
         boolean result = false;
-        if(!StringUtils.isEmpty(userId)){
-            result = UserDAO.delUser(Long.parseLong(userId));
+        if (userId != 0) {
+            result = userService.delUser(userId);
         }
-        return result ? "success" : "failed";
+        if (result) {
+            response.setData(userService.getUsers());
+        }else{
+            response.setStatus(300);
+        }
+        return JSON.toJSONString(response);
     }
 
 
